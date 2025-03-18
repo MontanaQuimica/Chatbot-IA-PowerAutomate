@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChatBot IA para Produtos Montana</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+        }
+        .chat-container {
+            width: 90%;
+            max-width: 500px;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            margin: auto;
+        }
+        .chat-box {
+            height: 300px;
+            overflow-y: auto;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+            text-align: left;
+        }
+        .input-container {
+            display: flex;
+        }
+        input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 15px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-left: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .message {
+            margin: 5px 0;
+            padding: 8px;
+            border-radius: 5px;
+        }
+        .user {
+            background: #d1e7fd;
+            text-align: right;
+        }
+        .bot {
+            background: #e2e2e2;
+        }
+    </style>
+</head>
+<body>
+    <h1>ChatBot IA para Produtos Montana</h1>
+    <div class="chat-container">
+        <div class="chat-box" id="chat-box"></div>
+        <div class="input-container">
+            <input type="text" id="user-input" placeholder="Digite sua pergunta..." maxlength="200">
+            <button onclick="sendMessage()">Enviar</button>
+        </div>
+    </div>
+
+    <script>
+        async function sendMessage() {
+            const inputField = document.getElementById("user-input");
+            const chatBox = document.getElementById("chat-box");
+            const userMessage = inputField.value.trim();
+            if (!userMessage) return;
+
+            chatBox.innerHTML += `<div class='message user'>${userMessage}</div>`;
+            inputField.value = "";
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            try {
+                const url = `https://prod-22.brazilsouth.logic.azure.com/workflows/e3e7a06154ef43e5a179e4de706c92ef/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=XLTU2tsHw8v1Mbh3dOhDwq_T6SGqyws2Y9h28i2lYtQ&pergunta=${encodeURIComponent(userMessage)}`;
+                const response = await fetch(url, { method: "GET" });
+                
+                // Verificar o tipo de conteúdo da resposta
+                const contentType = response.headers.get("Content-Type");
+
+                let data;
+                if (contentType && contentType.includes("application/json")) {
+                    // Se a resposta for JSON, processa como JSON
+                    data = await response.json();
+                } else {
+                    // Caso contrário, trata como texto simples
+                    data = await response.text();
+                }
+
+                console.log("Resposta do servidor:", data);
+
+                if (response.ok && data) {
+                    chatBox.innerHTML += `<div class='message bot'>${data}</div>`;
+                } else {
+                    chatBox.innerHTML += `<div class='message bot'>Erro ao obter resposta</div>`;
+                }
+            } catch (error) {
+                console.error("Erro na requisição:", error);
+                chatBox.innerHTML += `<div class='message bot'>Erro na comunicação com o servidor</div>`;
+            }
+
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        document.getElementById("user-input").addEventListener("keypress", function(event) {
+            if (event.key === "Enter") {
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>
